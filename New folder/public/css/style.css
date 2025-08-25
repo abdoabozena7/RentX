@@ -1,0 +1,180 @@
+/*
+ * Modern UI stylesheet for Assaf Cars.
+ * This file defines a fresh colour palette, typography and components
+ * to give the site a more elegant and contemporary look.
+ */
+
+/* Define CSS variables for easy theming */
+:root {
+    --accent: #F96D00;      /* Warm orange accent colour */
+    --dark: #0A1931;        /* Deep navy background colour */
+    --dark-alt: #12264b;    /* Slightly lighter dark for gradients */
+    --light: #ffffff;       /* White for text and cards */
+    --grey: #f5f6fa;        /* Light grey page background */
+    --text-dark: #2c3e50;   /* Dark grey text */
+    --text-muted: #6c757d;  /* Muted text colour */
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Base styles */
+body {
+    margin: 0;
+    font-family: var(--font-family);
+    background-color: var(--grey);
+    color: var(--text-dark);
+    line-height: 1.6;
+}
+
+/* Top bar */
+.topbar {
+    background-color: var(--dark);
+    color: var(--light);
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+}
+.topbar a {
+    color: var(--light);
+    margin: 0 0.5rem;
+    transition: color 0.2s;
+}
+.topbar a:hover {
+    color: var(--accent);
+}
+
+/* Navbar */
+.navbar {
+    background-color: var(--dark);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+.navbar-brand h1 {
+    color: var(--accent);
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin: 0;
+}
+.navbar-nav .nav-link {
+    color: var(--light) !important;
+    font-weight: 500;
+    margin-right: 1rem;
+    transition: color 0.2s;
+}
+.navbar-nav .nav-link.active,
+.navbar-nav .nav-link:hover {
+    color: var(--accent) !important;
+}
+
+/* Hero section */
+.hero {
+    position: relative;
+    background-size: cover;
+    background-position: center;
+    color: var(--light);
+    text-align: center;
+    padding: 120px 0;
+}
+.hero h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+.hero p {
+    font-size: 1.25rem;
+    margin-bottom: 0;
+}
+
+/* Search bar */
+.search-bar {
+    background-color: var(--light);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    padding: 1rem;
+    margin-top: -50px;
+    position: relative;
+    z-index: 100;
+}
+.search-bar .form-select,
+.search-bar .form-control {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    height: 45px;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+    color: var(--text-dark);
+}
+.search-bar .btn-search {
+    height: 45px;
+    background-color: var(--accent);
+    border: none;
+    color: var(--light);
+    font-weight: 600;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+}
+.search-bar .btn-search:hover {
+    background-color: #d85e00;
+}
+
+/* Cards for car listings */
+.card-car {
+    background-color: var(--light);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    padding: 1rem;
+}
+.card-car:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.card-car img {
+    width: 100%;
+    height: 180px;
+    object-fit: contain;
+    background-color: #f9f9f9;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+.card-car .name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--dark);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+}
+.card-car .attributes {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+}
+.card-car .attributes i {
+    color: var(--accent);
+    margin-right: 0.25rem;
+}
+.card-car .btn-action {
+    display: inline-block;
+    background-color: var(--accent);
+    color: var(--light);
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+.card-car .btn-action:hover {
+    background-color: #d85e00;
+}
+
+/* Footer (optional) */
+footer {
+    background-color: var(--dark);
+    color: var(--light);
+    font-size: 0.875rem;
+    padding: 1rem 0;
+    text-align: center;
+}

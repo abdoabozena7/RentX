@@ -1,0 +1,112 @@
+/*
+ * Styles specific to the admin dashboard. These rules build upon the colour
+ * variables defined in the main style.css file. The dashboard adopts a
+ * light layout with a clean sidebar and content area, making it easy to
+ * manage records without the heavy look of the original design.
+ */
+
+body {
+    background-color: var(--grey);
+    font-family: 'Tajawal', sans-serif;
+    color: var(--text-dark);
+}
+
+/* Admin header styling */
+.admin-header {
+    background: var(--light);
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--grey);
+}
+.admin-header .admin-brand {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.admin-header .admin-links a,
+.admin-header .admin-links button {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+    margin-left: 0.5rem;
+    background: none;
+    border: none;
+}
+.admin-header .admin-links a:hover,
+.admin-header .admin-links button:hover {
+    color: var(--highlight);
+    cursor: pointer;
+}
+
+.sidebar {
+    background: var(--light);
+    color: var(--primary);
+    border-right: 1px solid var(--grey);
+    min-height: 100vh;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+}
+.sidebar h4 {
+    margin-bottom: 1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+.sidebar a {
+    display: block;
+    padding: 0.5rem 1rem;
+    color: var(--primary);
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+.sidebar a.active,
+.sidebar a:hover {
+    background: var(--highlight);
+    color: #ffffff;
+}
+
+.content {
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    margin-top: 1rem;
+    min-height: calc(100vh - 2rem);
+}
+
+/* Tables in dashboard */
+table.table {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: none;
+}
+table.table thead {
+    background-color: var(--primary);
+    color: var(--secondary);
+}
+table.table tbody tr:nth-child(odd) {
+    background-color: var(--grey);
+}
+table.table tbody tr:hover {
+    background-color: var(--secondary);
+}
+table.table td, table.table th {
+    vertical-align: middle;
+}
+
+/* Buttons in dashboard */
+.btn-action {
+    background-color: var(--highlight);
+    color: #fff;
+    border: none;
+    padding: 0.45rem 0.9rem;
+    border-radius: 0.25rem;
+    font-size: 0.9rem;
+    transition: background-color 0.2s ease;
+}
+.btn-action:hover {
+    background-color: var(--accent);
+    color: var(--dark);
+}
