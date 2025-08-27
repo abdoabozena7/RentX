@@ -20,7 +20,7 @@
                         @endif
                         <form method="POST" action="{{ route('logout') }}" class="d-inline">
                             @csrf
-                            <button class="nav-item nav-link btn btn-link text-dark p-0 m-0">تسجيل الخروج</button>
+                            <button class="nav-item nav-link btn btn-link text-light p-0 m-0">تسجيل الخروج</button>
                         </form>
                     @else
                         <a href="{{ route('login') }}" class="nav-item nav-link">تسجيل الدخول</a>

@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="container py-5">
-    <h2 class="text-center mb-4 text-color=black ">طلب حجز سيارة</h2>
+    <h2 class="text-center mb-4">طلب حجز سيارة</h2>
     @if (session('success'))
         <div class="alert alert-success">{{ session('success') }}</div>
     @endif

@@ -22,11 +22,23 @@ Route::get('/', function() {
     // إذا كان المستخدم بالفعل مسجلاً دخوله، يمكن إعادة توجيهه إلى لوحة التحكم أو الصفحة الرئيسية حسب الحاجة
     return redirect()->route('login');
 });
-// الصفحة الرئيسية للموقع بعد تسجيل الدخول يمكن الوصول إليها عبر /home
-Route::get('/home', [HomeController::class, 'index'])->name('home');
-Route::get('/cars', [HomeController::class, 'cars'])->name('cars');
-Route::get('/electric', [HomeController::class, 'electric'])->name('electric');
-Route::get('/shipping', [HomeController::class, 'shipping'])->name('shipping');
+// Front pages now serve static HTML files from the `public` directory using the original frontend.
+Route::get('/home', function() {
+    // Serve the static index page as the home page
+    return response()->file(public_path('index.html'));
+})->name('home');
+Route::get('/cars', function() {
+    // Serve the static car list page
+    return response()->file(public_path('car.html'));
+})->name('cars');
+Route::get('/electric', function() {
+    // Serve the static electric devices page
+    return response()->file(public_path('Electric.html'));
+})->name('electric');
+Route::get('/shipping', function() {
+    // Serve the static shipping & customs page
+    return response()->file(public_path('shipping.html'));
+})->name('shipping');
 
 // صفحات النماذج
 Route::get('/service/general', [HomeController::class, 'generalForm'])->name('general.form');
