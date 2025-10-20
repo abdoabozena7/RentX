@@ -6,12 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * يمثل عملية شحن أو طلب تخليص جمركى.
- * الحقول:
- *  - type: نوع الشحن (برّى، بحرى، جوّى).
- *  - description: وصف الطلب.
- *  - status: حالة الطلب (جديد، جارى التنفيذ، مكتمل، ملغى).
- *  - reference: رقم أو رمز مرجعى لتعقب الشحنة.
+ * Shipment model tracks import/export or customs shipments.
+ *
+ * Attributes:
+ * - id (int, primary key)
+ * - type (string)            e.g. استيراد، تصدير، تخليص جمركي.
+ * - ref (string)             External reference code.
+ * - status (string)          Current status of the shipment.
+ * - eta (date|null)          Estimated date of arrival/completion.
+ * - description (text|null)  Additional details.
+ * - created_at/updated_at    Timestamps managed by Laravel.
  */
 class Shipment extends Model
 {
@@ -19,8 +23,9 @@ class Shipment extends Model
 
     protected $fillable = [
         'type',
-        'description',
+        'ref',
         'status',
-        'reference',
+        'eta',
+        'description',
     ];
 }

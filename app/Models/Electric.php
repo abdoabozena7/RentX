@@ -6,18 +6,17 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Car model represents a rental vehicle in the system.
+ * Electric model represents an electrical appliance or product.
  *
  * Attributes:
  * - id (int, primary key)
- * - name (string)           The make or common name of the car.
- * - model (string)          The specific model designation.
- * - price_per_day (float)   Rental price per day in local currency.
- * - details (text|null)     Additional descriptive information (gearbox, fuel, etc.).
+ * - name (string)           Name of the product.
+ * - description (text|null) Human‑friendly description of the item.
+ * - price (float|null)      Price of the item in local currency.
  * - image_path (string|null)Path to the stored image on disk.
  * - created_at/updated_at    Timestamps managed by Laravel.
  */
-class Car extends Model
+class Electric extends Model
 {
     use HasFactory;
 
@@ -28,9 +27,8 @@ class Car extends Model
      */
     protected $fillable = [
         'name',
-        'model',
-        'price_per_day',
-        'details',
+        'description',
+        'price',
         'image_path',
     ];
 }

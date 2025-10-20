@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>لوحة تحكم موقع تأجير السيارات</title>
+  <title>لوحة تحكم موقع  عساف</title>
   <style>
     :root{
       --bg:#0f172a;          /* slate-900 */
@@ -131,9 +131,7 @@
         <button data-view="cars">🚘 السيارات</button>
         <button data-view="reservations">📅 الحجوزات</button>
         <button data-view="shipments">📦 الاستيراد/التصدير والجمارك</button>
-        <button data-view="surveys">📝 الاستبيانات (العملاء + مكيفات صحراوية)</button>
-        <button data-view="website">🌐 معاينة موقع العملاء</button>
-        <button data-view="settings">⚙️ الإعدادات</button>
+        <button data-view="surveys">📝عملاء المكيفات صحراوية</button>
       </nav>
     </aside>
 
@@ -146,10 +144,7 @@
           <span class="chip">السعة الحالية: <span id="fleetCount">0</span> سيارة</span>
           <span class="chip">حجوزات مفتوحة: <span id="openRes">0</span></span>
         </div>
-        <div class="chips">
-          <button class="btn ghost" id="seedBtn">ملء بيانات تجريبية</button>
-          <button class="btn success" id="exportAll">تصدير كل البيانات (JSON)</button>
-        </div>
+        
       </div>
 
       <div class="content" id="view-container">
@@ -173,22 +168,67 @@ const db = {
 };
 
 const LSK = 'rental_dashboard_v1';
+
+// Base URL for the backend API. When running this dashboard inside a Laravel
+// application the API endpoints are mounted beneath `/api`. Adjust this
+// constant if your backend is served from a different prefix.
+const API_BASE = '/api';
 const $ = sel => document.querySelector(sel);
 const $$ = sel => Array.from(document.querySelectorAll(sel));
 const uid = () => Math.random().toString(36).slice(2,10);
 
-function load(){
-  const raw = localStorage.getItem(LSK);
-  if(raw){
-    const obj = JSON.parse(raw);
-    Object.assign(db, obj);
+// Override persistence functions to synchronise data with the backend.
+// Instead of using localStorage we fetch from and send to the API. These
+// functions hydrate the `db` object on page load and update it after
+// mutations. When invoked they return promises so callers can await
+// completion before re‑rendering views.
+
+async function load(){
+  try {
+    const [carsRes, reservationsRes, leadsRes, acLeadsRes, shipmentsRes] = await Promise.all([
+      fetch(`${API_BASE}/cars`),
+      fetch(`${API_BASE}/reservations`),
+      fetch(`${API_BASE}/leads`),
+      fetch(`${API_BASE}/ac-leads`),
+      fetch(`${API_BASE}/shipments`)
+    ]);
+    db.cars = carsRes.ok ? await carsRes.json() : [];
+    db.reservations = reservationsRes.ok ? await reservationsRes.json() : [];
+    db.leads = leadsRes.ok ? await leadsRes.json() : [];
+    db.acLeads = acLeadsRes.ok ? await acLeadsRes.json() : [];
+    db.shipments = shipmentsRes.ok ? await shipmentsRes.json() : [];
+  } catch (err) {
+    console.error('Error loading data from API', err);
   }
-}
-function save(){
-  localStorage.setItem(LSK, JSON.stringify(db));
   updateTopStats();
 }
-function clearAll(){ localStorage.removeItem(LSK); location.reload(); }
+
+async function save(){
+  // Persistence to backend is performed in the individual event handlers. This
+  // function simply updates top level statistics to reflect the current state
+  // of the in memory `db` object after API operations complete.
+  updateTopStats();
+}
+
+async function clearAll(){
+  // Clearing all data via the backend is not implemented. You can iterate
+  // through each resource and delete entries one by one if needed.
+  if(confirm('سيتم حذف جميع البيانات من قاعدة البيانات. هل أنت متأكد؟')){
+    // Delete cars
+    for(const car of db.cars){
+      await fetch(`${API_BASE}/cars/${car.id}`, {method:'DELETE'});
+    }
+    for(const res of db.reservations){
+      await fetch(`${API_BASE}/reservations/${res.id}`, {method:'DELETE'});
+    }
+    for(const s of db.shipments){
+      await fetch(`${API_BASE}/shipments/${s.id}`, {method:'DELETE'});
+    }
+    // leads and acLeads are kept for record – they are not deleted here.
+    await load();
+    render('dashboard');
+  }
+}
 
 function formatMoney(n){
   const x = Number(n||0);
@@ -515,33 +555,30 @@ function bindDynamicHandlers(view){
     form.addEventListener('submit', async e=>{
       e.preventDefault();
       const fd = new FormData(form);
-      const id = fd.get('id')||uid();
-      const img = fd.get('image');
-      let imageData = null;
-      if(img && img.size){ imageData = await fileToData(img); }
-      const newCar = {
-        id,
-        name: fd.get('name'),
-        model: fd.get('model'),
-        pricePerDay: Number(fd.get('pricePerDay')),
-        details: fd.get('details'),
-        imageData
-      };
-      const idx = db.cars.findIndex(c=>c.id===id);
-      if(idx>-1){ // edit
-        db.cars[idx] = {...db.cars[idx], ...newCar, imageData: imageData||db.cars[idx].imageData};
-      } else {
-        db.cars.push(newCar);
+      const id = fd.get('id');
+      let url = `${API_BASE}/cars`;
+      if(id){
+        // When editing we append _method so Laravel interprets this as a PUT
+        url = `${API_BASE}/cars/${id}`;
+        fd.append('_method','PUT');
       }
-      save(); render('cars');
+      try {
+        const res = await fetch(url, {method:'POST', body: fd});
+        if(!res.ok) throw new Error('save failed');
+      } catch(err){
+        alert('فشل حفظ السيارة، يرجى المحاولة مرة أخرى');
+        console.error(err);
+        return;
+      }
+      await load();
+      render('cars');
+      form.reset();
     });
-
     // تقارير وتصدير
     $('#exportCars')?.addEventListener('click',()=>{
-      const rows = db.cars.map(c=>({id:c.id,name:c.name,model:c.model,pricePerDay:c.pricePerDay,details:c.details}));
+      const rows = db.cars.map(c=>({id:c.id,name:c.name,model:c.model,pricePerDay:c.price_per_day,details:c.details}));
       exportCSV('cars.csv', rows);
     });
-
     // بحث
     $('#carSearch')?.addEventListener('input', e=>{
       const q = e.target.value.trim();
@@ -549,24 +586,29 @@ function bindDynamicHandlers(view){
         tr.style.display = tr.textContent.includes(q)?'':'none';
       });
     });
-
     // أزرار لكل صف
-    $('#view-container').addEventListener('click', e=>{
+    $('#view-container').addEventListener('click', async e=>{
       const tr = e.target.closest('tr'); if(!tr) return;
       const id = tr.dataset.id;
       if(e.target.matches('[data-action="edit"]')){
-        const c = db.cars.find(x=>x.id===id);
+        const c = db.cars.find(x=>String(x.id)===String(id));
         form.name.value = c.name;
         form.model.value = c.model;
-        form.pricePerDay.value = c.pricePerDay;
+        form.pricePerDay.value = c.price_per_day || c.pricePerDay;
         form.details.value = c.details||'';
         form.id.value = c.id;
         form.scrollIntoView({behavior:'smooth'});
       }
       if(e.target.matches('[data-action="delete"]')){
         if(confirm('حذف هذه السيارة؟')){
-          db.cars = db.cars.filter(c=>c.id!==id);
-          save(); render('cars');
+          try {
+            await fetch(`${API_BASE}/cars/${id}`, {method:'DELETE'});
+            await load();
+            render('cars');
+          } catch(err){
+            alert('حدث خطأ أثناء حذف السيارة');
+            console.error(err);
+          }
         }
       }
     });
@@ -575,13 +617,25 @@ function bindDynamicHandlers(view){
   if(view==='reservations'){
     $('#exportRes2')?.addEventListener('click',()=>exportCSV('reservations.csv', db.reservations));
     const tbody = $('#resTBody');
-    tbody?.addEventListener('click', e=>{
+    tbody?.addEventListener('click', async (e) => {
       const tr = e.target.closest('tr'); if(!tr) return;
       const id = tr.dataset.id;
       if(e.target.matches('[data-action="toggle-status"]')){
-        const r = db.reservations.find(x=>x.id===id);
-        r.status = r.status==='جاري'?'مكتمل':r.status==='مكتمل'?'ملغي':'جاري';
-        save(); render('reservations');
+        const r = db.reservations.find(x => String(x.id) === String(id));
+        const current = r ? r.status : 'جاري';
+        const newStatus = current === 'جاري' ? 'مكتمل' : current === 'مكتمل' ? 'ملغي' : 'جاري';
+        try {
+          await fetch(`${API_BASE}/reservations/${id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: newStatus, _method: 'PUT' })
+          });
+          await load();
+          render('reservations');
+        } catch (err) {
+          alert('تعذر تحديث حالة الحجز');
+          console.error(err);
+        }
       }
     });
     $('#resFilter')?.addEventListener('change', e=>{
@@ -599,26 +653,52 @@ function bindDynamicHandlers(view){
 
   if(view==='shipments'){
     const form = $('#shipForm');
-    form?.addEventListener('submit', e=>{
+    form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(form);
-      db.shipments.push({
-        id: uid(), type: fd.get('type'), ref: fd.get('ref'), status: fd.get('status'), eta: fd.get('eta'), description: fd.get('description')
-      });
-      save(); render('shipments');
+      try {
+        const res = await fetch(`${API_BASE}/shipments`, { method:'POST', body: fd });
+        if(!res.ok) throw new Error('create shipment failed');
+      } catch(err){
+        alert('فشل إضافة الشحنة');
+        console.error(err);
+        return;
+      }
+      await load();
+      render('shipments');
+      form.reset();
     });
     const tbody = $('#shipTBody');
-    tbody?.addEventListener('click', e=>{
+    tbody?.addEventListener('click', async (e) => {
       const tr = e.target.closest('tr'); if(!tr) return;
       const id = tr.dataset.id;
       if(e.target.matches('[data-action="ship-status"]')){
-        const s = db.shipments.find(x=>x.id===id);
-        s.status = s.status==='منتهية'?'قيد المعالجة':s.status==='قيد المعالجة'?'بانتظار المستندات':'منتهية';
-        save(); render('shipments');
+        const s = db.shipments.find(x => String(x.id) === String(id));
+        const current = s ? s.status : 'قيد المعالجة';
+        const newStatus = current === 'منتهية' ? 'قيد المعالجة' : current === 'قيد المعالجة' ? 'بانتظار المستندات' : 'منتهية';
+        try {
+          await fetch(`${API_BASE}/shipments/${id}`, {
+            method:'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ status:newStatus, _method:'PUT' })
+          });
+          await load();
+          render('shipments');
+        } catch(err){
+          alert('تعذر تحديث حالة الشحنة');
+          console.error(err);
+        }
       }
       if(e.target.matches('[data-action="ship-del"]')){
         if(confirm('حذف هذه الشحنة؟')){
-          db.shipments = db.shipments.filter(x=>x.id!==id); save(); render('shipments');
+          try {
+            await fetch(`${API_BASE}/shipments/${id}`, { method:'DELETE' });
+            await load();
+            render('shipments');
+          } catch(err){
+            alert('تعذر حذف الشحنة');
+            console.error(err);
+          }
         }
       }
     });
@@ -638,33 +718,74 @@ function bindDynamicHandlers(view){
   }
 
   if(view==='website'){
-    // حجز
-    $('#reserveForm')?.addEventListener('submit', e=>{
+    // حجز – send reservation to backend
+    $('#reserveForm')?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      db.reservations.push({
-        id: uid(),
-        carId: fd.get('carId'),
-        customerName: fd.get('customerName'),
+      try {
+        const res = await fetch(`${API_BASE}/reservations`, { method:'POST', body: fd });
+        if(!res.ok) throw new Error('reservation failed');
+      } catch(err){
+        alert('تعذر إرسال الحجز، حاول مجددًا');
+        console.error(err);
+        return;
+      }
+      await load();
+      alert('تم استلام الحجز!');
+      e.target.reset();
+    });
+    // استبيان العملاء – send lead to backend
+    $('#leadForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = {
+        name: fd.get('name'),
         phone: fd.get('phone'),
-        nationalId: fd.get('nationalId'),
-        startDate: fd.get('startDate'),
-        endDate: fd.get('endDate'),
-        status: 'جاري'
-      });
-      save(); alert('تم استلام الحجز!'); e.target.reset();
+        email: fd.get('email'),
+        message: fd.get('message')
+      };
+      try {
+        const res = await fetch(`${API_BASE}/leads`, {
+          method:'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error('lead failed');
+      } catch(err){
+        alert('تعذر إرسال الطلب');
+        console.error(err);
+        return;
+      }
+      await load();
+      alert('شكرًا لك! سنعاود الاتصال قريبًا.');
+      e.target.reset();
     });
-    // استبيان العملاء
-    $('#leadForm')?.addEventListener('submit', e=>{
-      e.preventDefault(); const fd = new FormData(e.target);
-      db.leads.push({id: uid(), name: fd.get('name'), phone: fd.get('phone'), email: fd.get('email'), message: fd.get('message'), createdAt: Date.now()});
-      save(); alert('شكرًا لك! سنعاود الاتصال قريبًا.'); e.target.reset();
-    });
-    // استبيان المكيفات
-    $('#acForm')?.addEventListener('submit', e=>{
-      e.preventDefault(); const fd = new FormData(e.target);
-      db.acLeads.push({id: uid(), name: fd.get('name'), phone: fd.get('phone'), city: fd.get('city'), capacity: fd.get('capacity'), useCase: fd.get('useCase'), createdAt: Date.now()});
-      save(); alert('تم إرسال الطلب بنجاح.'); e.target.reset();
+    // استبيان المكيفات – send AC lead to backend
+    $('#acForm')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const payload = {
+        name: fd.get('name'),
+        phone: fd.get('phone'),
+        city: fd.get('city'),
+        capacity: fd.get('capacity'),
+        use_case: fd.get('useCase')
+      };
+      try {
+        const res = await fetch(`${API_BASE}/ac-leads`, {
+          method:'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if(!res.ok) throw new Error('ac lead failed');
+      } catch(err){
+        alert('تعذر إرسال الطلب');
+        console.error(err);
+        return;
+      }
+      await load();
+      alert('تم إرسال الطلب بنجاح.');
+      e.target.reset();
     });
   }
 
